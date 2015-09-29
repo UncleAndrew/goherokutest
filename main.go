@@ -1,11 +1,25 @@
 package main
 
-import "github.com/go-martini/martini"
+import (
+    "net/http"
+    "os"
+    "github.com/russross/blackfriday"
+)
 
 func main() {
-    m := martini.Classic()
-    m.Get("/", func() string {
-        return "Hello World"
-    })
-    m.Run()
+    port := os.Getenv("PORT")
+    if port == "" {
+        port = "8080"
+    }
+
+    http.HandleFunc("/markdown", GenerateMarkdown)
+    http.Handle("/", http.FileServer(http.Dir("public")))
+    http.ListenAndServe(":8080", nil)
+            
 }
+
+func GenerateMarkdown(rw http.ResponseWriter, r *http.Request) {
+    markdown := blackfriday.MarkdownCommon([]byte(r.FormValue("body")))
+    rw.Write(markdown)
+}
+
